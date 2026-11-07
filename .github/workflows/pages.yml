@@ -1,0 +1,36 @@
+name: Publish Android download and court feed
+on:
+  push:
+    branches: [live]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: nyayadin-pages
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Stage public files
+        run: |
+          mkdir -p "$RUNNER_TEMP/site/api/day"
+          cp api/day/*.json "$RUNNER_TEMP/site/api/day/"
+          cp index.html health.json NyayaDin.apk "$RUNNER_TEMP/site/"
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa
+        with:
+          path: ${{ runner.temp }}/site
+          retention-days: 1
+      - id: deploy
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e
